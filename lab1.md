@@ -1,5 +1,11 @@
 # Bezrukavaya-K-ISP-21-LAB-1
 
+![image](https://github.com/user-attachments/assets/41ca24e8-e171-4b37-8f8e-e66375d29533)
+
+Архитектура системы мониторинга с использованием Prometheus, Grafana, Alertmanager и Victoria Metrics
+
+
+
 
 Для начала я установила Linux Oracle на VirtualBox, выделила 2 ядра и 4096 МБ оперативной памяти. При установке операционной системы выбрала английский язык (eng).
 
@@ -144,3 +150,157 @@ pwd - Команда pwd в терминале показывает, в како
 Так-же удаляет созданную сеть (docker network ls**).
 
 Не может удалять тома по умолчанию (но можно добавить --volumes для полного удаления данных).
+
+
+
+# Prometheus
+
+Копирую конфигурационные файлы с github командой
+
+    sudo git clone https://github.com/kusakabeee1/Bezrukavaya-K-ISP-21-LAB-1.git
+
+![image](https://github.com/user-attachments/assets/2c479d84-6e75-4f77-a22f-28ba0a8849b5)
+
+
+Перемещаем файлы в корень grafana_stack_for_docker
+Перемещаем файл заменяя предыдущий:
+
+    sudo mv prometheus.yaml /mnt/common_volume/swarm/grafana/config
+    
+![image](https://github.com/user-attachments/assets/27724859-e0fc-4aaf-a756-7073470255e8)
+
+Запускаем docker compose в фоновом режиме, используя команду:
+
+    sudo docker compose up -d
+
+![image](https://github.com/user-attachments/assets/2fe45f7e-a990-4a62-a8b3-62cf8c84205c)
+
+
+
+# Переходим на сайт 
+
+localhost:3000
+
+юзер и пароль GRAFANA: admin
+
+Код графаны: 3000
+
+В меню выбираем вкладку Dashboards и создаем Dashboard
+
+Нажимаем кнопку +Add visualization, а после "Configure a new data source"
+
+Выбираем Prometheus
+
+![image](https://github.com/user-attachments/assets/c295133e-62b1-47ec-a6ab-6492a1a9c852)
+![image](https://github.com/user-attachments/assets/88d3df4f-65a0-4039-bad7-dfcf72261647)
+
+Настройки подключения:
+
+В разделе HTTP в поле URL пишу: http://prometheus:9090.
+
+Если Prometheus и Grafana в одной Docker-сети, имя prometheus должно вставиться автоматически.
+
+Включаем Basic authentication в разделе Auth.
+
+![image](https://github.com/user-attachments/assets/aa3fed3a-c610-4934-9339-e38c054d2843)
+
+Connection
+
+![image](https://github.com/user-attachments/assets/8fe61438-3ff7-4f23-8deb-e55dbda8b83a)
+
+    http://prometheus:9090
+
+    
+Вводим логин/пароль (если Prometheus защищен):
+
+User: admin
+
+Password: admin
+
+
+![image](https://github.com/user-attachments/assets/86ecb527-ea9f-401d-a283-edf21c21e965)
+
+Нажимаем Save & test.
+
+
+В меню жмем (Dashboards) сначала New, потом Import.
+
+
+![image](https://github.com/user-attachments/assets/b1d8c747-66af-4a29-943a-b3a6c107fa5d)
+
+В поле Import via grafana.com вводим ID 1860 и нажимаем Load.
+
+![image](https://github.com/user-attachments/assets/d464ea90-b5d8-4d44-973d-028ce150a7a1)
+
+Выбираем источник данных Prometheus из выпадающего списка.
+
+Нажимаем Import.
+
+
+
+Видим, что дашборд загрузился с графиками. 
+
+![image](https://github.com/user-attachments/assets/3bab0bb2-13df-4206-bcf4-29df2212fa4c)
+
+
+
+Вводим команду 
+
+    echo -e "# TYPE light_metric1 gauge\nlight_metric1 0" | curl --data-binary @- http://localhost:8428/api/v1/import/prometheus
+
+![image_2025-04-03_19-40-09](https://github.com/user-attachments/assets/bb94932d-aa7f-4922-b1ec-b0e2887b100b)
+
+
+
+
+**# TYPE light_metric1 gauge** — объявляет тип метрики light_metric1 как gauge (изменяемое числовое значение).
+
+**light_metric1 0** — устанавливает начальное значение метрики в 0.
+
+Команда создает метрику light_metric1 типа gauge со значением 0 и отправляет её в VictoriaMetrics через API для сбора и хранения метрик.
+
+
+Переходим в браузере по ссылке http://localhost:8428/, открывается такое меню в нём нужно выбрать vmui
+
+![image](https://github.com/user-attachments/assets/660a1c44-ba6b-42a3-a94b-325eb30e51db)
+
+Вписываем light_metric1 и нажимаем Execute Query
+
+![image](https://github.com/user-attachments/assets/8c96e727-2359-444f-82da-71f82e671a12)
+
+
+Переходим на http://localhost:3000 выбираем Dashboard и нажимаем New Dashboard, далее Add Visualization
+
+![image](https://github.com/user-attachments/assets/88a8e50a-aa3f-47d7-a8de-0480cf1ea782)
+
+
+Нажимаем Configure a new data source и выбираем Prometheus
+
+![image](https://github.com/user-attachments/assets/71d5bf46-b0f7-4bcd-bf4c-cda328c28898)
+
+
+
+Вписываем:
+
+Name: vika
+
+Connection: http://victoriametrics:8428
+
+Нажимаем Save & Test
+
+
+![image](https://github.com/user-attachments/assets/1784bc6d-ae70-4a97-b544-617984adb819)
+
+
+
+Вписываем light_metric1
+
+![image](https://github.com/user-attachments/assets/7a671bf8-df40-431f-bb17-6fb5f54c04da)
+
+
+Выходит панель с графиком, где есть активность light_metric1
+
+![image](https://github.com/user-attachments/assets/44688eee-b76d-4699-8b9d-b05fcedc2ca3)
+
+
+
